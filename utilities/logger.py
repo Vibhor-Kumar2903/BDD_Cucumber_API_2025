@@ -1,63 +1,100 @@
-from datetime import datetime
-import os
-import allure
 import logging
+import allure
 
-# Singleton logger instance
-LOGGER = None
 
-def get_logger(name="RobotLogger", log_level=logging.INFO):
+# -------------------------------------------
+# Create a global logger object
+# -------------------------------------------
+logger = logging.getLogger("BehaveLogger")
+logger.setLevel(logging.DEBUG)   # Capture all levels
+
+
+# -------------------------------------------
+# Console Handler
+# -------------------------------------------
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(
+    "%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+console_handler.setFormatter(formatter)
+
+
+# -------------------------------------------
+# File Handler (Optional)
+# Stores logs in logs/test.log
+# -------------------------------------------
+# file_handler = logging.FileHandler("logs/test.log", mode="a")
+# file_handler.setLevel(logging.DEBUG)
+# file_handler.setFormatter(formatter)
+
+
+# -------------------------------------------
+# Attach handlers to logger (avoid duplicates)
+# -------------------------------------------
+# if not logger.handlers:
+#     logger.addHandler(console_handler)
+#     logger.addHandler(file_handler)
+
+
+# ------------------------------------------------
+# Wrapper to automatically send logs to Allure
+# ------------------------------------------------
+def _attach_to_allure(level, message):
     """
-    Returns a logger instance that logs to both console and file.
-    Logs are also attached to Allure reports automatically.
+    Internal helper to attach logs to Allure in a clean way.
     """
-    global LOGGER
-    if LOGGER:
-        return LOGGER
+    try:
+        allure.attach(
+            message,
+            name=f"{level.upper()}",
+            attachment_type=allure.attachment_type.TEXT
+        )
+    except:
+        # Allure may not be active for some runs
+        pass
 
-    # Create logs directory if not present
-    log_dir = os.path.join(os.getcwd(), "Logs")
-    os.makedirs(log_dir, exist_ok=True)
 
-    # Create a timestamped log file
-    log_file = os.path.join(log_dir, f"test_run_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+# -------------------------------------------
+# Override logging methods to also log to Allure
+# -------------------------------------------
+original_info = logger.info
+original_debug = logger.debug
+original_warning = logger.warning
+original_error = logger.error
+original_critical = logger.critical
 
-    # Configure logger
-    logger = logging.getLogger(name)
-    logger.setLevel(log_level)
-    formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
 
-    # Console Handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+def info(message):
+    original_info(message)
+    _attach_to_allure("info", message)
 
-    # File Handler
-    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
 
-    # Add Allure step logging hook
-    def allure_hook(message, level="INFO"):
-        """Attach log entries to Allure report."""
-        with allure.step(f"[{level}] {message}"):
-            allure.attach(message, name=f"{level} Log", attachment_type=allure.attachment_type.TEXT)
+def debug(message):
+    original_debug(message)
+    _attach_to_allure("debug", message)
 
-    # Monkey patch logger methods to also log to Allure
-    def _log_with_allure(level_func, level_name):
-        def wrapper(msg, *args, **kwargs):
-            message = str(msg)
-            level_func(message, *args, **kwargs)
-            allure_hook(message, level_name)
-        return wrapper
 
-    logger.info = _log_with_allure(logger.info, "INFO")
-    logger.warning = _log_with_allure(logger.warning, "WARNING")
-    logger.error = _log_with_allure(logger.error, "ERROR")
-    logger.debug = _log_with_allure(logger.debug, "DEBUG")
+def warning(message):
+    original_warning(message)
+    _attach_to_allure("warning", message)
 
-    LOGGER = logger
-    return LOGGER
+
+def error(message):
+    original_error(message)
+    _attach_to_allure("error", message)
+
+
+def critical(message):
+    original_critical(message)
+    _attach_to_allure("critical", message)
+
+
+# Assign new methods to logger
+logger.info = info
+logger.debug = debug
+logger.warning = warning
+logger.error = error
+logger.critical = critical

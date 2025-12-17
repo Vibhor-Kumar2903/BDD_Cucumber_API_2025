@@ -1,7 +1,7 @@
 from drivers.chrome_driver import *
-from utilities.logger import get_logger
+from utilities.logger import *
 
-logger = get_logger()
+# logger = get_logger()
 
 def before_all(context):
     launch_chrome(context)
