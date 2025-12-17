@@ -1,8 +1,7 @@
-from utilities.logger import get_logger
+from utilities.logger import *
 from openpyxl import load_workbook
 import os
 
-logger = get_logger()
 
 class ExcelReader:
     """
