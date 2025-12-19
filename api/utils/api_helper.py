@@ -13,7 +13,7 @@ class API_Client:
         response = None
         logger.info(f"\nSending {request_type} request .....")
         url = f"{base_url}{endpoint}"
-        print(f"URL : {url}")
+        logger.info(f"URL : {url}")
 
         if request_type == "GET":
             response = requests.get(url=url, headers=self.header, json=payload)
@@ -27,7 +27,7 @@ class API_Client:
         if request_type == "DELETE":
             response = requests.delete(url=url, headers=self.header, json=payload)
 
-        print(f"Response : {response}")
+        logger.info(f"Response : {response}")
         assert response.status_code == expected_code
 
         return response
