@@ -13,7 +13,7 @@ def getting_activity(context):
     response = context.response
     logger.info(response.status_code)
     logger.info(response.json())
-
+    print("API verified")
 
 @step('Verify post API')
 def creating_activity(context):
@@ -23,6 +23,7 @@ def creating_activity(context):
     logger.info(response.status_code)
     logger.info(response.json())
     context.activity_id = context.response.json()['id']
+    print("API verified")
 
 
 @step('Verify get API by ID')
@@ -32,6 +33,7 @@ def Verify_get_API_using_ID(context):
     response = context.response
     logger.info(response.status_code)
     logger.info(response.json())
+    print("API verified")
 
 
 @step('Verify put API by ID')
@@ -42,6 +44,7 @@ def put_API_verification(context):
     response = context.response
     logger.info(response.status_code)
     logger.info(response.json())
+    print("API verified")
 
 
 @step('Verify delete API by ID')
@@ -50,6 +53,7 @@ def delete_created_API(context):
     context.response = client.send_request('DELETE', activities_by_ID, 200)
     response = context.response
     logger.info(response.status_code)
+    print("API verified")
 
 
 
